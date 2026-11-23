@@ -703,7 +703,9 @@ plutovg_font_face_t* plutovg_font_face_cache_get(plutovg_font_face_cache_t* cach
 #include <limits.h>
 #endif
 
+#if !defined(_WIN32) && !defined(__SWITCH__)
 #include <sys/mman.h>
+#endif
 #include <sys/stat.h>
 #endif
 
@@ -739,6 +741,41 @@ static void* plutovg_mmap(const char* filename, long* length)
 static void plutovg_unmap(void* data, long length)
 {
     UnmapViewOfFile(data);
+}
+
+#elif defined(__SWITCH__)
+
+static void* plutovg_mmap(const char* filename, long* length)
+{
+    FILE* file = fopen(filename, "rb");
+    if(!file)
+        return NULL;
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    if(size <= 0) {
+        fclose(file);
+        return NULL;
+    }
+    void* data = malloc(size);
+    if(!data) {
+        fclose(file);
+        return NULL;
+    }
+    if(fread(data, 1, size, file) != (size_t)size) {
+        free(data);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *length = size;
+    return data;
+}
+
+static void plutovg_unmap(void* data, long length)
+{
+    (void)length;
+    free(data);
 }
 
 #else

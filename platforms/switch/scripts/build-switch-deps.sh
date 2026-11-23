@@ -39,25 +39,24 @@ CMAKE_COMMON_FLAGS=(
     "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
 )
 
-# 1. Plutovg
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# 1. Plutovg (using patched in-tree source)
 echo "--- Building Plutovg ---"
-cd "$BUILD_DIR"
-git clone --depth 1 https://github.com/sammycage/plutovg.git
-cmake -B build-plutovg -S plutovg \
+cmake -B "$BUILD_DIR/build-plutovg" -S "$REPO_ROOT/3rdparty/plutovg" \
     "${CMAKE_COMMON_FLAGS[@]}" \
     -DPLUTOVG_BUILD_STATIC=ON \
     -DPLUTOVG_BUILD_EXAMPLES=OFF
-cmake --build build-plutovg -j"$NPROCS" --target install
+cmake --build "$BUILD_DIR/build-plutovg" -j"$NPROCS" --target install
 
-# 2. Plutosvg
+# 2. Plutosvg (using in-tree source)
 echo "--- Building Plutosvg ---"
-cd "$BUILD_DIR"
-git clone --depth 1 https://github.com/sammycage/plutosvg.git
-cmake -B build-plutosvg -S plutosvg \
+cmake -B "$BUILD_DIR/build-plutosvg" -S "$REPO_ROOT/3rdparty/plutosvg" \
     "${CMAKE_COMMON_FLAGS[@]}" \
     -DPLUTOSVG_BUILD_STATIC=ON \
     -DPLUTOSVG_BUILD_EXAMPLES=OFF
-cmake --build build-plutosvg -j"$NPROCS" --target install
+cmake --build "$BUILD_DIR/build-plutosvg" -j"$NPROCS" --target install
 
 # 3. SDL3 for Nintendo Switch
 echo "--- Building SDL3 ---"
