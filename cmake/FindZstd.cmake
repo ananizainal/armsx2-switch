@@ -22,6 +22,16 @@
 
 find_path(Zstd_INCLUDE_DIR NAMES zstd.h)
 
+if(Zstd_INCLUDE_DIR)
+  file(STRINGS "${Zstd_INCLUDE_DIR}/zstd.h" _ver_major_line REGEX "^#define ZSTD_VERSION_MAJOR  *[0-9]+")
+  string(REGEX MATCH "[0-9]+" Zstd_VERSION_MAJOR "${_ver_major_line}")
+  file(STRINGS "${Zstd_INCLUDE_DIR}/zstd.h" _ver_minor_line REGEX "^#define ZSTD_VERSION_MINOR  *[0-9]+")
+  string(REGEX MATCH "[0-9]+" Zstd_VERSION_MINOR "${_ver_minor_line}")
+  file(STRINGS "${Zstd_INCLUDE_DIR}/zstd.h" _ver_release_line REGEX "^#define ZSTD_VERSION_RELEASE  *[0-9]+")
+  string(REGEX MATCH "[0-9]+" Zstd_VERSION_PATCH "${_ver_release_line}")
+  set(Zstd_VERSION "${Zstd_VERSION_MAJOR}.${Zstd_VERSION_MINOR}.${Zstd_VERSION_PATCH}")
+endif()
+
 find_library(Zstd_LIBRARY_DEBUG NAMES zstdd zstd_staticd)
 find_library(Zstd_LIBRARY_RELEASE NAMES zstd zstd_static)
 
@@ -32,6 +42,7 @@ include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(
     Zstd DEFAULT_MSG
     Zstd_LIBRARY Zstd_INCLUDE_DIR
+    VERSION_VAR Zstd_VERSION
 )
 
 mark_as_advanced(Zstd_INCLUDE_DIR Zstd_LIBRARY)

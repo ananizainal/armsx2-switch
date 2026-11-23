@@ -42,10 +42,13 @@ jobs:
             switch-libpng \
             switch-libjpeg-turbo \
             switch-zlib \
-            switch-zstd \
+            switch-libzstd \
             switch-lz4 \
+            switch-libwebp \
+            switch-curl \
             switch-freetype \
             switch-pkg-config
+          dkp-pacman -S --noconfirm python git || true
 
       - name: Cache Extra Switch Dependencies (SDL3, Plutovg)
         id: cache-switch-deps

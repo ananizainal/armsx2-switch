@@ -70,6 +70,25 @@ cmake -B build-sdl3 -S SDL \
     -DSDL_TEST_LIBRARY=OFF
 cmake --build build-sdl3 -j"$NPROCS" --target install
 
+# 4. Shaderc (glslang + SPIRV-Tools) for Nintendo Switch
+echo "--- Building Shaderc ---"
+cd "$BUILD_DIR"
+git clone --depth 1 --branch v2025.4 https://github.com/google/shaderc.git
+cd shaderc
+python3 utils/git-sync-deps
+cd ..
+cmake -B build-shaderc -S shaderc \
+    "${CMAKE_COMMON_FLAGS[@]}" \
+    -DSHADERC_SKIP_TESTS=ON \
+    -DSHADERC_SKIP_EXAMPLES=ON \
+    -DSHADERC_SKIP_COPYRIGHT_CHECK=ON \
+    -DENABLE_GLSLANG_BINARIES=OFF \
+    -DSPIRV_SKIP_EXECUTABLES=ON
+cmake --build build-shaderc -j"$NPROCS" --target shaderc_combined
+mkdir -p "$PREFIX/lib" "$PREFIX/include"
+cp build-shaderc/libshaderc/libshaderc_combined.a "$PREFIX/lib/"
+cp -r shaderc/libshaderc/include/shaderc "$PREFIX/include/"
+
 # Cleanup temporary build directory
 rm -rf "$BUILD_DIR"
 echo "=== All Switch dependencies successfully built and installed to $PREFIX ==="

@@ -114,16 +114,18 @@ else()
 	# HTTPDownloader::Create() returns nothing and its callers (achievements,
 	# cover downloads) treat the downloader as unavailable. So this must not be
 	# REQUIRED there either; it was the first thing an iOS configure stopped on.
-	if(NOT IOS)
+	if(NOT IOS AND NOT SWITCH)
 		find_package(CURL REQUIRED)
 		find_package(PCAP REQUIRED)
+	elseif(SWITCH)
+		find_package(CURL)
 	endif()
 	find_package(Vtune)
 
 	## Use CheckLib package to find module
 	include(CheckLib)
 
-	if(UNIX AND NOT APPLE)
+	if(UNIX AND NOT APPLE AND NOT SWITCH)
 		# Android is UNIX AND NOT APPLE, but it is not a desktop: it has no
 		# fontconfig and no D-Bus session to inhibit a screensaver on, and the
 		# only thing built there is the libretro core, which asks for neither.
