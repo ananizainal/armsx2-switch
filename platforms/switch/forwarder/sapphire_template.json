@@ -1,0 +1,19 @@
+{
+  "title_id": "0100A64000582000",
+  "title_name": "ARMSX2",
+  "author": "ARMSX2 Team",
+  "version": "1.0.0",
+  "nro_path": "sdmc:/switch/armsx2/armsx2.nro",
+  "romfs_dir": "",
+  "icon_path": "assets/icon.png",
+  "permissions": {
+    "jit_enabled": true,
+    "memory_type": "Application",
+    "ram_limit_mb": 3221,
+    "debugger": true
+  },
+  "flags": {
+    "title_override": true,
+    "argv": ""
+  }
+}

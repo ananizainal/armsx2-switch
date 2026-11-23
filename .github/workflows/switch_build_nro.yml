@@ -1,0 +1,88 @@
+name: Build Nintendo Switch NRO
+
+on:
+  push:
+    branches: [ main, master, switch-port ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [ main, master, switch-port ]
+  workflow_dispatch:
+
+jobs:
+  build-switch-nro:
+    name: Build ARMSX2 NRO (devkitA64)
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Official Switch Packages (dkp-pacman)
+        run: |
+          source /etc/profile.d/devkit-env.sh
+          dkp-pacman -Syu --noconfirm
+          dkp-pacman -S --noconfirm \
+            switch-mesa \
+            switch-libdrm_nouveau \
+            switch-sdl2 \
+            switch-glad \
+            switch-libpng \
+            switch-libjpeg-turbo \
+            switch-zlib \
+            switch-zstd \
+            switch-lz4 \
+            switch-freetype \
+            switch-pkg-config
+
+      - name: Cache Extra Switch Dependencies (SDL3, Plutovg)
+        id: cache-switch-deps
+        uses: actions/cache@v4
+        with:
+          path: /opt/devkitpro/portlibs/switch
+          key: switch-deps-${{ hashFiles('platforms/switch/scripts/build-switch-deps.sh') }}
+
+      - name: Build Extra Dependencies (SDL3 & Plutovg)
+        if: steps.cache-switch-deps.outputs.cache-hit != 'true'
+        run: |
+          source /etc/profile.d/devkit-env.sh
+          chmod +x platforms/switch/scripts/build-switch-deps.sh
+          platforms/switch/scripts/build-switch-deps.sh /opt/devkitpro/portlibs/switch
+
+      - name: Configure CMake for Nintendo Switch
+        run: |
+          source /etc/profile.d/devkit-env.sh
+          cmake -B build -G "Unix Makefiles" \
+            -DCMAKE_TOOLCHAIN_FILE=${DEVKITPRO}/cmake/Switch.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_SWITCH=ON \
+            -DSWITCH=ON \
+            -DUSE_VULKAN=ON \
+            -DUSE_OPENGL=OFF \
+            -DENABLE_QT_UI=OFF \
+            -DENABLE_SDL_FRONTEND=ON \
+            -DENABLE_TESTS=OFF \
+            -DENABLE_GSRUNNER=OFF \
+            -DENABLE_EERUNNER=OFF \
+            -DENABLE_VURUNNER=OFF \
+            -DENABLE_LIBRETRO=OFF
+
+      - name: Compile ARMSX2 Core & Package NRO
+        run: |
+          source /etc/profile.d/devkit-env.sh
+          cmake --build build -j$(nproc)
+
+      - name: Upload NRO Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: armsx2-switch-nro
+          path: |
+            build/bin/armsx2.nro
+            build/platforms/switch/armsx2.nacp
+          if-no-files-found: error
