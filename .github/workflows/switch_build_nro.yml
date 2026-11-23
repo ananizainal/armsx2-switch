@@ -16,8 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: devkitpro/devkita64:latest
+    defaults:
+      run:
+        shell: bash
 
     steps:
+      - name: Configure Git Safe Directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -26,7 +32,7 @@ jobs:
 
       - name: Install Official Switch Packages (dkp-pacman)
         run: |
-          source /etc/profile.d/devkit-env.sh
+          [ -f /etc/profile.d/devkit-env.sh ] && . /etc/profile.d/devkit-env.sh || true
           dkp-pacman -Syu --noconfirm
           dkp-pacman -S --noconfirm \
             switch-mesa \
@@ -51,15 +57,15 @@ jobs:
       - name: Build Extra Dependencies (SDL3 & Plutovg)
         if: steps.cache-switch-deps.outputs.cache-hit != 'true'
         run: |
-          source /etc/profile.d/devkit-env.sh
+          [ -f /etc/profile.d/devkit-env.sh ] && . /etc/profile.d/devkit-env.sh || true
           chmod +x platforms/switch/scripts/build-switch-deps.sh
           platforms/switch/scripts/build-switch-deps.sh /opt/devkitpro/portlibs/switch
 
       - name: Configure CMake for Nintendo Switch
         run: |
-          source /etc/profile.d/devkit-env.sh
+          [ -f /etc/profile.d/devkit-env.sh ] && . /etc/profile.d/devkit-env.sh || true
           cmake -B build -G "Unix Makefiles" \
-            -DCMAKE_TOOLCHAIN_FILE=${DEVKITPRO}/cmake/Switch.cmake \
+            -DCMAKE_TOOLCHAIN_FILE=${DEVKITPRO:-/opt/devkitpro}/cmake/Switch.cmake \
             -DCMAKE_BUILD_TYPE=Release \
             -DENABLE_SWITCH=ON \
             -DSWITCH=ON \
@@ -75,7 +81,7 @@ jobs:
 
       - name: Compile ARMSX2 Core & Package NRO
         run: |
-          source /etc/profile.d/devkit-env.sh
+          [ -f /etc/profile.d/devkit-env.sh ] && . /etc/profile.d/devkit-env.sh || true
           cmake --build build -j$(nproc)
 
       - name: Upload NRO Artifact
